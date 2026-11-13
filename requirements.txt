@@ -1,0 +1,25 @@
+
+# Backend
+fastapi
+uvicorn[standard]
+
+# LLM integration
+requests
+
+# Data processing
+pandas
+numpy
+
+# Validation and configuration
+pydantic
+python-dotenv
+
+# Frontend
+streamlit
+
+# Database
+sqlalchemy
+
+# Testing
+pytest
+httpx
