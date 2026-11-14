@@ -33,7 +33,10 @@ def main():
         expected
     )
 
-    print("Similarity score:", similar_score)
+    print(
+        "Similarity score:",
+        similar_score
+    )
 
     print("\nComparing unrelated answers...")
 
@@ -42,7 +45,10 @@ def main():
         expected
     )
 
-    print("Similarity score:", unrelated_score)
+    print(
+        "Similarity score:",
+        unrelated_score
+    )
 
     print("\nEvaluation completed!")
 

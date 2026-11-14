@@ -62,8 +62,15 @@ class SemanticSimilarityEvaluator:
         Calculate cosine similarity between two vectors.
         """
 
-        vector_a = np.array(embedding_a, dtype=float)
-        vector_b = np.array(embedding_b, dtype=float)
+        vector_a = np.array(
+            embedding_a,
+            dtype=float
+        )
+
+        vector_b = np.array(
+            embedding_b,
+            dtype=float
+        )
 
         if vector_a.shape != vector_b.shape:
             raise ValueError(
@@ -71,6 +78,7 @@ class SemanticSimilarityEvaluator:
             )
 
         norm_a = np.linalg.norm(vector_a)
+
         norm_b = np.linalg.norm(vector_b)
 
         if norm_a == 0 or norm_b == 0:
@@ -78,7 +86,10 @@ class SemanticSimilarityEvaluator:
                 "Cannot compare zero-length embeddings."
             )
 
-        similarity = np.dot(vector_a, vector_b) / (
+        similarity = np.dot(
+            vector_a,
+            vector_b
+        ) / (
             norm_a * norm_b
         )
 
@@ -94,6 +105,7 @@ class SemanticSimilarityEvaluator:
         """
 
         predicted_embedding = self.get_embedding(predicted)
+
         expected_embedding = self.get_embedding(expected)
 
         return self.cosine_similarity(

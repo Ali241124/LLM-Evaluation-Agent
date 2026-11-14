@@ -1,6 +1,9 @@
 
 from backend.app.datasets.loader import DatasetLoader
-from backend.app.evaluation.engine import EvaluationEngine
+
+from backend.app.evaluation.engine import (
+    EvaluationEngine
+)
 
 
 def main():
@@ -9,7 +12,8 @@ def main():
     print("LLM EVALUATION ENGINE")
     print("=" * 65)
 
-    # Step 1: Load the evaluation dataset.
+    # STEP 1: Load dataset
+
     loader = DatasetLoader()
 
     dataset = loader.load(
@@ -17,24 +21,31 @@ def main():
     )
 
     print("\nDataset:", dataset.dataset_name)
+
     print("Questions:", len(dataset.samples))
 
-    # Step 2: Select models.
-    # Start with one model to keep this first test manageable.
+    # STEP 2: Select models
+
     selected_models = [
         "llama3.2:3b"
     ]
 
-    # Step 3: Initialize the evaluation engine.
-    engine = EvaluationEngine()
+    # STEP 3: Initialize engine
 
-    # Step 4: Evaluate the dataset.
+    engine = EvaluationEngine(
+        judge_model="llama3.2:3b",
+        enable_judge=True,
+    )
+
+    # STEP 4: Run evaluation
+
     results = engine.evaluate_dataset(
         dataset=dataset,
         models=selected_models,
     )
 
-    # Step 5: Display individual results.
+    # STEP 5: Display individual results
+
     print("\n" + "=" * 65)
     print("INDIVIDUAL EVALUATION RESULTS")
     print("=" * 65)
@@ -42,34 +53,114 @@ def main():
     for result in results:
 
         print(f"\nQuestion ID: {result.sample_id}")
+
         print(f"Model: {result.model}")
+
         print(f"Question: {result.question}")
 
         if result.error:
-            print(f"Generation Error: {result.error}")
+
+            print(
+                f"Generation Error: {result.error}"
+            )
+
             continue
 
-        print(f"Generated Answer: {result.predicted_answer}")
-        print(f"Exact Match: {result.exact_match}")
-        print(f"Token F1: {result.token_f1}")
         print(
-            f"Semantic Similarity: "
-            f"{result.semantic_similarity}"
+            f"Generated Answer: {result.predicted_answer}"
         )
-        print(f"Latency: {result.latency:.2f} seconds")
-        print(f"Prompt Tokens: {result.prompt_tokens}")
+
+        print("\nTEXT METRICS")
+        print("-" * 35)
+
         print(
-            f"Completion Tokens: "
-            f"{result.completion_tokens}"
+            "Exact Match:",
+            result.exact_match
+        )
+
+        print(
+            "Token F1:",
+            result.token_f1
+        )
+
+        print(
+            "Semantic Similarity:",
+            result.semantic_similarity
         )
 
         if result.semantic_error:
+
             print(
-                f"Semantic Evaluation Error: "
-                f"{result.semantic_error}"
+                "Semantic Error:",
+                result.semantic_error
             )
 
-    # Step 6: Calculate model averages.
+        print("\nPERFORMANCE METRICS")
+        print("-" * 35)
+
+        print(
+            f"Latency: {result.latency:.2f} seconds"
+            if result.latency is not None
+            else "Latency: N/A"
+        )
+
+        print(
+            "Prompt Tokens:",
+            result.prompt_tokens
+        )
+
+        print(
+            "Completion Tokens:",
+            result.completion_tokens
+        )
+
+        print("\nLLM JUDGE SCORES")
+        print("-" * 35)
+
+        print(
+            "Correctness:",
+            result.judge_correctness,
+            "/ 5"
+        )
+
+        print(
+            "Relevance:",
+            result.judge_relevance,
+            "/ 5"
+        )
+
+        print(
+            "Completeness:",
+            result.judge_completeness,
+            "/ 5"
+        )
+
+        print(
+            "Clarity:",
+            result.judge_clarity,
+            "/ 5"
+        )
+
+        print(
+            "Judge Overall:",
+            result.judge_overall_score,
+            "/ 5"
+        )
+
+        print(
+            "Judge Reasoning:",
+            result.judge_reasoning
+        )
+
+        if result.judge_error:
+
+            print(
+                "Judge Error:",
+                result.judge_error
+            )
+
+    # STEP 6: Calculate model summaries
+
     summaries = engine.summarize_results(results)
 
     print("\n" + "=" * 65)
@@ -77,9 +168,14 @@ def main():
     print("=" * 65)
 
     for summary in summaries:
+
         for key, value in summary.items():
+
             print(f"{key}: {value}")
+
         print("-" * 40)
+
+    print("\nEvaluation completed!")
 
 
 if __name__ == "__main__":
