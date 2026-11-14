@@ -1,0 +1,4 @@
+
+{"id":"Q001","question":"What is Artificial Intelligence?","expected_answer":"AI enables machines to perform tasks that normally require human intelligence.","category":"AI"}
+{"id":"Q002","question":"What is Machine Learning?","expected_answer":"Machine Learning enables computers to learn patterns from data.","category":"ML"}
+{"id":"Q003","question":"What is Deep Learning?","expected_answer":"Deep Learning uses multi-layer neural networks to learn complex patterns.","category":"DL"}
