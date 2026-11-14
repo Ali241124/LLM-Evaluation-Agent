@@ -18,9 +18,7 @@ class ModelManager:
         ]
 
     def list_models(self):
-        """
-        Return configured models.
-        """
+
         return self.available_models
 
     def generate_response(
@@ -28,10 +26,12 @@ class ModelManager:
         prompt: str,
         model: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.2
+        temperature: float = 0.2,
+        response_format: Optional[str] = None,
     ) -> LLMResponse:
 
         if model not in self.available_models:
+
             raise ValueError(
                 f"Model {model} is not configured."
             )
@@ -40,7 +40,8 @@ class ModelManager:
             prompt=prompt,
             model=model,
             system_prompt=system_prompt,
-            temperature=temperature
+            temperature=temperature,
+            response_format=response_format,
         )
 
     def compare_models(

@@ -30,7 +30,8 @@ class BaseLLMProvider(ABC):
         prompt: str,
         model: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.2
+        temperature: float = 0.2,
+        response_format: Optional[str] = None,
     ) -> LLMResponse:
         """
         Generate a response using the selected LLM.

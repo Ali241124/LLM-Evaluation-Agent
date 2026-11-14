@@ -28,14 +28,13 @@ class LLMJudgeEvaluator:
         self,
         question: str,
         expected_answer: str,
-        predicted_answer: str,
+        predicted_answer: str
     ) -> str:
 
         return f"""
 You are an impartial AI evaluation judge.
 
-Evaluate the predicted answer using the question
-and reference answer.
+Evaluate the predicted answer using the question and reference answer.
 
 QUESTION:
 {question}
@@ -46,36 +45,36 @@ REFERENCE ANSWER:
 PREDICTED ANSWER:
 {predicted_answer}
 
-Evaluate these four dimensions:
+Evaluate the predicted answer using these four dimensions:
 
 1. correctness:
-   Is the answer factually accurate and consistent
-   with the reference answer?
+Is the answer factually accurate and consistent with the reference?
 
 2. relevance:
-   Does the answer directly address the question?
+Does the answer directly address the question?
 
 3. completeness:
-   Does the answer cover the important information
-   required by the question?
+Does the answer cover the important information?
 
 4. clarity:
-   Is the answer clear, understandable, and organized?
+Is the answer clear, understandable, and well organized?
 
-Scoring rules:
-- 1 = Very poor
-- 2 = Poor
-- 3 = Acceptable
-- 4 = Good
-- 5 = Excellent
+SCORING SCALE:
+1 = Very poor
+2 = Poor
+3 = Acceptable
+4 = Good
+5 = Excellent
 
-Do not reward an answer simply because it is long.
-Do not penalize a correct answer for using different wording.
-Do not assume unsupported details are correct.
-Use the reference answer as guidance, not as an
-exclusive wording template.
+IMPORTANT RULES:
+- Do not reward unnecessary answer length.
+- Do not penalize different wording when the meaning is correct.
+- Do not assume unsupported details are correct.
+- Use the reference answer as guidance, not as an exclusive wording template.
+- Give honest and balanced scores.
+- Each score must be an integer between 1 and 5.
 
-Return ONLY valid JSON in this exact structure:
+Return a JSON object with exactly these fields:
 
 {{
     "correctness": 1,
@@ -90,103 +89,127 @@ Return ONLY valid JSON in this exact structure:
         self,
         question: str,
         expected_answer: str,
-        predicted_answer: str,
+        predicted_answer: str
     ) -> JudgeResult:
 
-        if not question.strip():
+        # Validate input
+        if not question or not question.strip():
             raise ValueError("Question cannot be empty.")
 
-        if not expected_answer.strip():
+        if not expected_answer or not expected_answer.strip():
             raise ValueError("Expected answer cannot be empty.")
 
-        if not predicted_answer.strip():
+        if not predicted_answer or not predicted_answer.strip():
             raise ValueError("Predicted answer cannot be empty.")
 
+        # Build evaluation prompt
         prompt = self.build_prompt(
-            question,
-            expected_answer,
-            predicted_answer,
+            question=question,
+            expected_answer=expected_answer,
+            predicted_answer=predicted_answer
         )
 
+        # Generate structured JSON response using Ollama
         response = self.model_manager.generate_response(
             prompt=prompt,
             model=self.judge_model,
             temperature=0.0,
             system_prompt=(
                 "You are a strict and impartial evaluation judge. "
-                "Return valid JSON only."
+                "Return a valid JSON object only. "
+                "Do not use Markdown or additional text."
             ),
+            response_format="json"
         )
 
-        # Extract the first JSON object from the response.
-        try:
-            json_start = response.content.find("{")
+        # Extract JSON from the response
+        response_text = response.content.strip()
 
-            if json_start == -1:
-                raise ValueError(
-                    "Judge did not return a JSON object."
-                )
+        json_start = response_text.find("{")
 
-            data, _ = json.JSONDecoder().raw_decode(
-                response.content[json_start:]
+        if json_start == -1:
+            raise ValueError(
+                "Invalid JSON returned by judge: "
+                f"No JSON object found. Response: {response_text}"
             )
 
-        except (json.JSONDecodeError, ValueError) as error:
+        try:
+            data, _ = json.JSONDecoder().raw_decode(
+                response_text[json_start:]
+            )
+
+        except json.JSONDecodeError as error:
             raise ValueError(
-                f"Invalid JSON returned by judge: {error}"
+                f"Invalid JSON returned by judge: {error}. "
+                f"Response: {response_text}"
             ) from error
 
+        # Ensure the response is a JSON object
+        if not isinstance(data, dict):
+            raise ValueError(
+                "Judge response must be a JSON object."
+            )
+
+        # Check required fields
         required_fields = [
             "correctness",
             "relevance",
             "completeness",
             "clarity",
-            "reasoning",
+            "reasoning"
         ]
 
         for field in required_fields:
-
             if field not in data:
                 raise ValueError(
-                    f"Judge response missing field: {field}"
+                    f"Judge response is missing required field: {field}"
                 )
 
-        scores = {}
+        # Validate scores
+        score_fields = [
+            "correctness",
+            "relevance",
+            "completeness",
+            "clarity"
+        ]
 
-        for field in required_fields[:4]:
+        for field in score_fields:
 
             value = data[field]
 
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, (int, float))
-            ):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise ValueError(
-                    f"Invalid score for {field}: {value}"
+                    f"Judge field '{field}' must be a number."
                 )
 
-            if value < 1 or value > 5 or value != int(value):
+            if not 1 <= value <= 5:
                 raise ValueError(
-                    f"{field} must be an integer from 1 to 5."
+                    f"Judge field '{field}' must be between 1 and 5."
                 )
 
-            scores[field] = int(value)
+            if value != int(value):
+                raise ValueError(
+                    f"Judge field '{field}' must be an integer."
+                )
 
+        # Validate reasoning
         if not isinstance(data["reasoning"], str):
             raise ValueError(
-                "Judge reasoning must be text."
+                "Judge reasoning must be a string."
             )
 
+        # Calculate overall score
         overall_score = round(
-            sum(scores.values()) / 4,
-            2,
+            sum(data[field] for field in score_fields) / 4,
+            2
         )
 
+        # Return structured evaluation result
         return JudgeResult(
-            correctness=scores["correctness"],
-            relevance=scores["relevance"],
-            completeness=scores["completeness"],
-            clarity=scores["clarity"],
+            correctness=int(data["correctness"]),
+            relevance=int(data["relevance"]),
+            completeness=int(data["completeness"]),
+            clarity=int(data["clarity"]),
             overall_score=overall_score,
-            reasoning=data["reasoning"],
+            reasoning=data["reasoning"]
         )
