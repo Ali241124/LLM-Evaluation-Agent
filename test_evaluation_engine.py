@@ -2,6 +2,7 @@
 from backend.app.datasets.loader import DatasetLoader
 from backend.app.evaluation.ranking import calculate_model_ranking
 from backend.app.evaluation.engine import EvaluationEngine
+from backend.app.evaluation.report import export_reports
 
 
 def main():
@@ -155,6 +156,32 @@ def main():
     print("EVALUATION AND RANKING COMPLETED!")
     print("=" * 65)
 
+    # -----------------------------------------
+    # STEP: EXPORT EVALUATION REPORTS
+    # -----------------------------------------
+
+    print("\n" + "=" * 65)
+    print("GENERATING EVALUATION REPORTS")
+    print("=" * 65)
+
+    report_paths = export_reports(
+        results=results,
+        summary=summary,
+        ranking=ranking,
+        output_dir="reports"
+    )
+
+    print("\nReports generated successfully!")
+
+    print("\nJSON Report:")
+    print(report_paths["json_report"])
+
+    print("\nCSV Report:")
+    print(report_paths["csv_report"])
+
+    print("\n" + "=" * 65)
+    print("EVALUATION, RANKING AND REPORT GENERATION COMPLETED!")
+    print("=" * 65)
 
 
 if __name__ == "__main__":
