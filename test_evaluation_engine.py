@@ -1,6 +1,6 @@
 
 from backend.app.datasets.loader import DatasetLoader
-
+from backend.app.evaluation.ranking import calculate_model_ranking
 from backend.app.evaluation.engine import EvaluationEngine
 
 
@@ -107,7 +107,53 @@ def main():
         print(f"{key}: {value}")
 
     print("-" * 40)
-    print("\nEvaluation completed!")
+
+    # STEP 8: Calculate model ranking
+    ranking = calculate_model_ranking(results)
+
+    # STEP 9: Display model leaderboard
+    print("\n" + "=" * 65)
+    print("MODEL LEADERBOARD")
+    print("=" * 65)
+
+    if not ranking:
+        print("No models were evaluated successfully.")
+
+    for item in ranking:
+
+        print(f"\nRank: {item['rank']}")
+        print(f"Model: {item['model']}")
+        print(f"Quality Score: {item['quality_score']}/100")
+
+        print("\nQUALITY METRICS")
+        print("-" * 35)
+
+        print("Judge Score:", item["judge_score"])
+        print("Semantic Score:", item["semantic_score"])
+        print("Token F1:", item["token_f1"])
+
+        print("\nEVALUATION COVERAGE")
+        print("-" * 35)
+
+        print(
+            f"Successful Questions: "
+            f"{item['successful_questions']}/"
+            f"{item['total_questions']}"
+        )
+
+        print("Judge Coverage:", item["judge_coverage"])
+        print("Semantic Coverage:", item["semantic_coverage"])
+        print("Token F1 Coverage:", item["token_f1_coverage"])
+
+        print("\nPERFORMANCE")
+        print("-" * 35)
+
+        print("Average Latency:", item["avg_latency"], "seconds")
+
+    print("\n" + "=" * 65)
+    print("EVALUATION AND RANKING COMPLETED!")
+    print("=" * 65)
+
 
 
 if __name__ == "__main__":
