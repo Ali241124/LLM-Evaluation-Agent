@@ -49,7 +49,11 @@ def main():
         print(f"Question: {result.question}")
 
         if result.error:
-            print(f"Generation Error: {result.error}")
+            print("\nGENERATION FAILED")
+            print("-" * 35)
+            print("Sample ID:", result.sample_id)
+            print("Model:", result.model)
+            print("Error:", result.error)
             continue
 
         print(f"Generated Answer: {result.predicted_answer}")
